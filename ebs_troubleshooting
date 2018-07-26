@@ -1,0 +1,12 @@
+# -------------------------------------- #
+# Enable lvm volume on new ec2 instance:
+# -------------------------------------- #
+
+# attach volume to new instance
+# sudo partprobe
+# sudo fdisk -l /dev/<device> # you should see if that's a lvm partition
+# sudo vgs
+# sudo lvscan # should say that lvm is inactive
+# sudo vgchange -ay
+# sudo lvscan # should list logical volume as active
+# sudo mount /pat/to/volume /path/to/dir
