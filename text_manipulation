@@ -1,0 +1,5 @@
+# Display text from a file without 1st and 4th line/ Remove 1st line & 4th line:
+cut -f 2-3,5- <filename>
+
+# Remove first 5 columns from output:
+cut -d" " -f6-

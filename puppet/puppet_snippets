@@ -1,0 +1,3 @@
+# Replace lookup.var ... in puppet templates:
+perl -pi.orig -e "s/scope\.lookupvar\(\'apache::httpd_listen_port\'\)/\@httpd_listen_port/g" www.domain.com.conf.erb
+

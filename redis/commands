@@ -1,0 +1,28 @@
+# Redis maintenance bash functions
+#
+
+stopredis() {
+     SERVICES="logstash-server logstash redis elasticsearch"
+     maintenance on
+     for i in  ${SERVICES}
+     do
+         service $i stop
+     done
+ }
+
+ startredis() {
+     SERVICES="elasticsearch redis logstash logstash-server"
+     maintenance on
+     for i in  ${SERVICES}
+     do
+         service $i start
+     done
+ }
+
+ showredisqueue() {
+    /bin/echo 'llen logstash' |/usr/bin/redis-cli -h 10.47.192.41 |/bin/awk '{print $1}'
+}
+
+loopredisq() {
+    while :; do date; showredisqueue;sleep 1; done
+}
