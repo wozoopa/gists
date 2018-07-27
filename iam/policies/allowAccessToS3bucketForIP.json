@@ -1,0 +1,12 @@
+{
+    "Sid": "IPAllow",
+    "Effect": "Allow",
+    "Principal": "*",
+    "Action": "s3:*",
+    "Resource": "arn:aws:s3:::<bucket-name>/*",
+    "Condition": {
+        "IpAddress": {
+            "aws:SourceIp": [ "<IP-ADDRESS-1>/32", "<IP-ADDRESS-2>/32"]
+        }
+    }
+}
