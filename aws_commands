@@ -27,3 +27,15 @@ aws ec2 describe-network-interfaces --filters "Name=description,Values=ELB MyAwe
 
 # Disable MFA device
 aws iam deactivate-mfa-device --user-name <username> --serial-number arn:aws:iam::<aws-account-nr>:mfa/<username>
+
+
+# Check status of instances behind ELB:
+ELB_NAME="<name>
+REGION="us-west-2"
+
+COUNT_OF_HEALTHY_INSTANCES=$(aws elb describe-instance-health --load-balancer-name ${ELB_NAME} --region ${REGION} --query 'InstanceStates[].{Status:State}' --output text | grep "InService" | wc -l)
+HEALTHY_INSTANCES=$(aws elb describe-instance-health --load-balancer-name ${ELB_NAME} --region ${REGION} --query 'InstanceStates[].{Status:State, ID:InstanceId}' --output text)
+
+
+# List users with MFA enabled:
+aws iam list-virtual-mfa-devices --region us-west-2 --query 'VirtualMFADevices[].User[].{Name:UserName,Created:CreateDate,User_ARN:Arn}' | less
