@@ -1,0 +1,63 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetAccountPasswordPolicy",
+                "iam:ListAccessKeys"
+            ],
+            "Resource": "arn:aws:iam::<account-number>:user/${aws:username}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "iam:ChangePassword",
+            "Resource": "arn:aws:iam::<account-number>:user/${aws:username}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateVirtualMFADevice",
+                "iam:EnableMFADevice",
+                "iam:ResyncMFADevice",
+                "iam:DeleteVirtualMFADevice"
+            ],
+            "Resource": [
+                "arn:aws:iam::<account-number>:mfa/${aws:username}",
+                "arn:aws:iam::<account-number>:user/${aws:username}"
+            ]
+        },
+        {
+            "Sid": "AllowUsersToDeactivateTheirOwnVirtualMFADevice",
+            "Effect": "Allow",
+            "Action": [
+                "iam:DeactivateMFADevice"
+            ],
+            "Resource": [
+                "arn:aws:iam::<account-number>:mfa/${aws:username}",
+                "arn:aws:iam::<account-number>:user/${aws:username}"
+            ],
+            "Condition": {
+                "Bool": {
+                    "aws:MultiFactorAuthPresent": "true"
+                }
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:ListMFADevices",
+                "iam:ListVirtualMFADevices",
+                "iam:ListUsers"
+            ],
+            "Resource": "*" 
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:List*"
+            ],
+            "Resource": "arn:aws:iam::<account-numnber>:group/mfa_users_group"
+        }
+    ]   
+}

@@ -1,0 +1,98 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "UserSelfManagement1",
+            "Effect": "Allow",
+            "Action": [
+                "iam:ListSSHPublicKeys",
+                "iam:ListServiceSpecificCredentials",
+                "iam:ListAttachedUserPolicies",
+                "iam:ListGroupsForUser",
+                "iam:List*",
+                "iam:Get*"
+            ],
+            "Resource": [
+                "arn:aws:iam::<account-number>:user/${aws:username}",
+                "arn:aws:iam::<account-number>:group/"
+            ]
+        },
+        {
+            "Sid": "Ec2AccessDEV1",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:Describe*",
+                "ec2:Get*",
+                "elasticloadbalancing:*"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": { 
+                    "ec2:Region": [
+                        "us-east-2"
+                    ]
+                }
+            }
+        },
+        {
+            "Sid": "ElbDEV1",
+            "Effect": "Allow",
+            "Action": [
+                "elasticloadbalancing:Describe*"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "ec2:Region": [
+                        "us-east-2"
+                    ]
+                }
+            }
+        },
+        {
+            "Sid": "CodeBuildDEV1",
+            "Effect": "Allow",
+            "Action": [
+                "codebuild:*"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "ec2:Region": [
+                        "us-east-2"
+                    ]
+                }
+            }
+        },
+        {
+            "Sid": "CodePipelineDEV1",
+            "Effect": "Allow",
+            "Action": [
+                "codepipeline:*"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "ec2:Region": [
+                        "us-east-2"
+                    ]
+                }
+            }
+        },
+        {
+            "Sid": "CodeDeployDEV1",
+            "Effect": "Allow",
+            "Action": [
+                "codedeploy:*"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "ec2:Region": [
+                        "us-east-2"
+                    ]
+                }
+            }
+        }
+    ]   
+}

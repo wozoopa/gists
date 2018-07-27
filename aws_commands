@@ -36,6 +36,18 @@ REGION="us-west-2"
 COUNT_OF_HEALTHY_INSTANCES=$(aws elb describe-instance-health --load-balancer-name ${ELB_NAME} --region ${REGION} --query 'InstanceStates[].{Status:State}' --output text | grep "InService" | wc -l)
 HEALTHY_INSTANCES=$(aws elb describe-instance-health --load-balancer-name ${ELB_NAME} --region ${REGION} --query 'InstanceStates[].{Status:State, ID:InstanceId}' --output text)
 
-
 # List users with MFA enabled:
 aws iam list-virtual-mfa-devices --region us-west-2 --query 'VirtualMFADevices[].User[].{Name:UserName,Created:CreateDate,User_ARN:Arn}' | less
+
+
+# List mfa users:
+aws iam list-virtual-mfa-devices --region us-west-2 --query 'VirtualMFADevices[].{serial:SerialNumber,user_info:User.UserName,pass_last_used:User.PasswordLastUsed}'
+
+# send command to ec2 Windows instances:
+aws ssm send-command --document-name "AWS-RunPowerShellScript" --comment "listing updates" --targets "Key=instanceids,Values=i-<id>,i-<id>,i-<id>" --parameters commands="get-hotfix" --region us-west-1 --output text
+
+# get output from command from EC2 instances (example using output from previous command):
+aws ssm list-command-invocations --command-id "c8252eae-3b93-4384-a305-23219a468789" --details --region us-west-1 --output text --query 'CommandInvocations[].{InstanceID:InstanceId,output:CommandPlugins[].Output}'
+
+# get instance status:
+aws ec2 describe-instances --instance-ids "<instance-id>" --region us-east-1 --output text --query 'Reservations[].Instances[].State[].Name'
