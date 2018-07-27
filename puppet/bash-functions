@@ -1,0 +1,21 @@
+# Bash function for checking puppet3.8 files for syntax:
+
+puppetlint ()
+{
+    READPATH="~/work/puppet3/modules/aide";
+    echo "### Checking puppet syntax, for science! ###";
+    for file in $(find ${READPATH}/ -type f -name "*.pp");
+    do
+        puppet-lint --no-80chars-check --no-documentation-check --fail-on-warnings --no-selector_inside_resource-check --no-only_variable_string-check --with-filename "${file}";
+        if [[ $? -ne 0 ]]; then
+            bad_syntax=1;
+        else
+            echo "${file} looks good" >> /dev/null;
+        fi;
+    done;
+    echo "### Validating puppet manifests! ###";
+    for file in $(find ${READPATH}/ -type f -name "*.pp");
+    do
+        puppet parser validate $file;
+    done
+}

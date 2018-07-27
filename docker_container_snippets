@@ -1,0 +1,154 @@
+# Get all tags for docker image during search:
+
+getdockerimagetags() {
+   Usage() {
+      echo "Needs docker image name, example:"
+      echo "getdockerimagetags ubuntu"
+   }
+DOCKER_IMAGE="$@"
+
+   if [ $# -gt "0" ]; then
+     curl -L -s 'https://registry.hub.docker.com/v2/repositories/library/'"${DOCKER_IMAGE}"'/tags?page_size=1024'|jq '."results"[]["name"]'
+   else
+      Usage
+  fi
+}
+
+
+# Create docker image based on container:
+docker commit -m '<container>' -a '<image-maintainer>' <container_name> <local-repository>/<tag-name>:<version>
+docker commit -m 'ssh with test user' -a 'testing-bla' awesome_allen testing/ubusshd:v1
+docker commit <source_container> <target_image>
+docker commit serene_shannon centos:mine
+
+
+# Connect as root to container:
+docker exec -u 0 -it <container_name> /bin/bash
+
+# Run cmd in container without attaching to it:
+docker exec <container-name> /bin/cat /var/www/html/index.html
+
+# Save docker image into tar file:
+docker save -o <file-name>.tar <base-image-name>:<tag>
+docker save -o centos.latest.tar centos:latest
+
+# filter out docker events:
+docker events --filter event=attach --filter event=die --filter event=stop
+
+# load docker tar compressed image:
+docker load --input centos.latest.tar.gz
+
+# Add custom bridge adapter
+ip link add br10 type bridge
+ip addr add 10.10.100.1/24 dev br10
+ip link set br10 up
+
+docker network create --subnet 10.1.0.0/24 --gateway 10.1.0.1 mybridge01
+docker network create --subnet 10.1.0.0/16 --gateway 10.1.0.1 --ip-range=10.1.4.0/24 --driver=bridge --label=host4network bridge04
+docker network create --driver=bridge --subnet=192.168.1.0/24 --opt "com.docker.network.driver.mtu"="1501" devel0
+
+
+docker run -it --name nettest2 --net bridge04 --ip 10.1.4.100  centos:latest /bin/bash
+
+# Set logging in rsyslog in /etc/daemon.json
+#
+
+{
+ "log-driver":"syslog",
+ "log-opts": {
+        "syslog-address": "udp://172.17.0.1:514"
+        }
+}
+
+# Set logging driver during container run:
+docker run -dit --name=testbla3 -p 8080:80 --log-driver json-file centos6:finalwebv1 /bin/bash
+
+# Set logging through daemon.json in docker:
+{
+ "log-driver":"syslog",
+ "log-opts": {
+        "syslog-address": "udp://<server-ip>:514"
+        }
+}
+
+# Initialize swarm:
+docker swarm init --advertise-addr <Ip-address>
+
+# Get tokens for joining as manager or worker
+docker swarm join-token worker
+docker swarm join-token manager
+
+# Create swarm service:
+docker service create --name backupweb --publish 80:80 --replicas 3 httpd
+
+# Backup swarm:
+tar cf /root/swarm.tar /var/lib/docker/swarm/
+
+# Configure universal control plane:
+docker container run --rm -it --name ucp -v /var/run/docker.sock:/var/run/docker.sock docker/ucp:2.2.4 install --host-address <swarm-manager-ip> --interactive
+
+# Backup UCP on UCP server and match ucp version (2 steps)
+#
+# STEP 1: (this will return id)
+docker container run --log-driver none --rm -i --name ucp -v /var/run/docker.sock:/var/run/docker.sock docker/ucp:2.2.4 backup > backup-$(date +%Y-%m-%d-%H_%M).tar
+# STEP 2 (use id from STEP 1):
+docker container run --log-driver none --rm -i --name ucp -v /var/run/docker.sock:/var/run/docker.sock docker/ucp:2.2.4 backup --id 8dsb4oeiumt7lixsycsi3tal5 > backup-$(date +%Y-%m-%d-%H_%M).tar
+
+# Backup DTR (use UCP server's IP or hostname):
+docker run -i --rm docker/dtr backup --ucp-insecure-tls --ucp-url https://192.168.56.104 --ucp-username admin --ucp-password admin123 > dtr-backup-$(date +%Y-%m-%d-%H_%M).tar
+
+# Docker search example with filters
+docker search -f stars=50 -f is-official=true --limit 10 apache
+
+# Set DTR certificate for docker correctly so clients can login (centos)
+cp /etc/docker/certs.d/192.168.56.103/192.168.56.103.crt /etc/pki/ca-trust/source/anchors/
+update-ca-trust
+systemctl restart docker
+
+# List repositories from private DTR:
+curl -k --user <username>:<pass> https://<dtr-domain>/api/v0/repositories
+
+# List repository names from private DTR:
+# format repo_name: namespace
+#
+curl -s -k --user <user>:<pass> https://<dtr-domain>/api/v0/repositories | jq '.repositories[].name'
+curl -s -k --user <user>:<pass> https://<dtr-domain>/api/v0/repositories | jq " .repositories[] | { repo_name: .name, namespace: .namespace }"
+
+# List all tags for repo:
+curl -s -k --user <user>:<pass> https://<dtr-domain>/api/v0/repositories/<user-namespace>/<repo-name>/tags | jq " .[] | {tag: .name}"
+
+# Lock swarm manager:
+docker swarm update --autolock=true
+
+# Rotate swarm manager lock key:
+docker swarm unlock-key --rotate
+
+# Limit cpu or mem on docker service:
+docker service update --limit-cpu=.5 --reserve-cpu=.5 --limit-memory=64m --reserve-memory=128m --detach=false <service-name>
+# list result:
+docker service ps <service-name>
+
+# Create docker service in global mode (default is replicated mode):
+docker service create --name <service-name> -p <custom-port>:80 --mode global --detach=false nginx
+
+# Create docker service (deploy containers) to nodes in the swarm cluster based on a given label (selected nodes):
+docker service create --name <service-name> -p <selected-port>:80 --constraint 'node.labels.mynode == <your-node-label>' --replicas 3 <image-name>
+
+# Create containers using docker-compose (requires docker-compose.yml file in current dir):
+docker-compose up -d
+
+# Stop containers that are created with docker-compose (all of them):
+docker-compose down --volumes
+
+# Deploy docker stacks to swarm:
+docker stack deploy --compose-file docker-compose.yml <stack-name>
+
+# Pull values from docker inspect json format:
+# example - check if container is paused
+docker inspect --format="{{.State.Paused}}" <container-name>
+# example - list ip address
+docker inspect --format="{{.IPAddress}}" <container-name>
+
+# Add container to custom network:
+docker network connect --ip=<custom-ip-address> <network-name> <container-name>
+docker network connect --ip=192.168.1.10 devel0 testweb

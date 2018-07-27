@@ -1,0 +1,26 @@
+#!/bin/bash
+
+#
+# This is set to be executed in cygwin on windows box.
+# Make sure paths are correct to your files.
+#
+
+INSTANCE_IDS="<instance-id> <instance-id>
+AWS_PROFILE="<aws-profile>"
+REGION="<target-region>"
+
+
+# get ip for instance
+for instance_id in ${INSTANCE_IDS}
+ do
+   GetPublicIP=$(aws ec2 describe-instances --profile ${AWS_PROFILE} --instance-ids ${instance_id} --region ${REGION} --query Reservations[].Instances[].NetworkInterfaces[].Association.PublicIp[] --output text)
+   GetNameTag=$(aws ec2 describe-tags --profile ${AWS_PROFILE} --filters "Name=resource-id,Values=${instance_id}" "Name=key,Values=Name" --region ${REGION} --query Tags[].Value --output text)
+   print "auto connect:i:1
+   full address:s:${GetPublicIP}
+   username:s:Administrator" >> ~/bin/rdp-tmp/$GetPublicIP.${GetNameTag}.rdp
+done
+zip -r ~/bin/rdp-files.zip -j ~/bin/rdp-tmp/
+
+"/cygdrive/d/Program Files (x86)/Microsoft Office/Office16/outlook.exe" /c ipm.note /a "D:\<path-to-file>\rdp-files.zip" /m <someon@something.com>
+
+rm -rf <path-to>/rdp-tmp/* <path-to>/rdp-files.zip

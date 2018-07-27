@@ -1,0 +1,3 @@
+# Get day for n days ago in format: YYYYMMDD
+n_days_ago = (datetime.date.today() - datetime.timedelta(days=28)).strftime('%Y-%m-%d').translate(None, '-')
+

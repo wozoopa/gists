@@ -1,0 +1,13 @@
+# Date manipulation in KSH.
+printf "%(%Y-%m-%d)T\n" "final last month"
+printf "%(%Y-%m-%d)T\n" "last month"
+printf "%(%Y-%m-%d)T\n" "last month Feb 2009"
+printf "%(%Y-%m-%d)T\n" "final day Feb 2007"
+printf "%T\n" '#'1206199251 - convert unix to human readable time stamp on the fly
+printf "%T\n" '2:00pm yesterday'
+printf '%(%D)T\n' "3rd wednesday may 2008"
+printf '%(%D)T\n' "4 weeks ago"
+printf "%T" "0 0 1,15 * 1" - convert crontab time to human readable :)
+printf "%T\n" "exactly next hour"
+printf "%(%Y-%m-%d)T\n" "1st last month"
+printf "%(%Y-%m-%d)T\n" "this month yesterday"

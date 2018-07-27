@@ -1,0 +1,38 @@
+# Show ip addresses with one command:
+function showips {
+    names=(`ifconfig | grep "lo\|eth" -A 1 | awk -F" " '{print $1}' | grep -v "inet\|-" | sort -u`)
+    for i in "${names[@]}"
+    do
+        echo interface $i has ip address: `ifconfig | grep $i -A 1 | grep addr | awk -F" " '{print $2}' | awk -F":" '{print $2}'`
+    done
+    if [ -e /opt/aws/bin/ec2-metadata ]; then
+        ec2-metadata | grep -i ip
+    fi
+}
+
+
+# Find process:
+function psax {
+   ARG=$1
+   Usage() {
+      echo 'synopsis: psax <pattern>'
+   }
+
+   (( $# ==0 )) && Usage
+
+   (( $# !=0 )) && ps aux | head -1 && ps aux | grep "${ARG}" | grep -v "grep"
+}
+
+# Up directory - alternative to cd ../../../
+
+up ()
+{
+    COUNTER=$1;
+    while [[ $COUNTER -gt 0 ]]; do
+        UP="${UP}../";
+        COUNTER=$(( $COUNTER -1 ));
+    done;
+    echo "cd $UP";
+    cd $UP;
+    UP=''
+}

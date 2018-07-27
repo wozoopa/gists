@@ -1,0 +1,27 @@
+
+alias gitlog='git log --format="%C(yellow)%h%C(green) %an%C(blue) %ad%C(reset)%n%w(72,1,2)%s" --graph'
+alias gitlog2='git log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ %ad [%cn]"  --decorate'
+alias gitlog4me='git log --format="%C(yellow)%h%C(green) %an%C(blue) %ad%C(reset)%n%w(72,1,2)%s" --author=<yourname@somedomain.something>--graph'
+alias gitloge='git log --format="%C(yellow)%h%C(green) %an%C(blue) %ad%C(reset)%n%w(72,1,2)%s" --author=<yourname@domain.something>--graph'
+alias gitshowfiles='git diff-tree --no-commit-id --name-only -r'
+
+# Add global aliases to /etc/gitconfig
+[merge]
+    tool = vimdiff
+[core]
+    editor = vim
+    #autocrlf = input
+[alias]
+    br = branch
+    bra = branch -rva
+    st = status
+    ci = commit
+    co = checkout
+    up = pull
+    hist = "log --pretty=format:\"%h %ad | %s%d [%an]\" --graph --date=short"
+[color]
+    ui = true
+
+# fix git clone issue:
+git config --global url."https://".insteadOf git://
+

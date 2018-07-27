@@ -1,0 +1,22 @@
+"# Disable VISUAL mode in vim. Add below line to ~/.vimrc
+"# 
+"# set mouse-=a
+"
+"# Set tab to 4 spaces in vim: - set these values in ~/.vimrc
+"#
+"# set smartindent
+"# set tabstop=3
+"# set shiftwidth=3
+"# set expandtab
+"
+"# Add #!/bin/bash to every bash script automatically:
+"#
+"# 1. Add below line to ~/.vimrc
+"# autocmd BufNewFile *.sh 0r ~/.skeleton.sh
+"#
+"# 2. Add below line to ~/.skeleton.sh
+"# #!/bin/bash
+
+"# Modify status bar:
+"# set statusline=%<%F%h%m%r\ [%{&ff}]\ (%{strftime(\"%H:%M\ %d/%m/%Y\",getftime(expand(\"%:p\")))})%=%l,%c%V\ %P
+

@@ -1,0 +1,7 @@
+# Rewrite to https in vhost:
+
+<VirtualHost *:80>
+RewriteEngine On
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteRule !/index.html https://%{SERVER_NAME}%{REQUEST_URI} L,R
+</VirtualHost>

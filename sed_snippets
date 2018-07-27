@@ -1,0 +1,37 @@
+# sed_replace_space_with_new_line
+cat <filename> | sed -e 's/\s\+/\n/g' >> <filename2>
+
+# Append string in front of the line:
+cat <filename> | sed 's/^/Testing_phrase=/g'
+
+# Remove square brackets and text between them, for example: [234]:
+cat <filename> | sed 's/\[.*\]//'
+
+# Remove blank/empty lines from a file
+sed '/^$/d' filename >filename2
+sed '/^\s*$/d'
+
+# Remove first 2 lines from a file:
+sed -e '1,2d' <filename>
+
+# Append backslash before forward slash:
+$ value2a="kjsafhklsaj/2fdssd"
+$ echo $value2a | sed 's./.\\/.g'
+
+# Replace asci character for forward slash with human readable forward slash:
+cat <file> |  sed -e 's/'$(echo "&#47;")'/\//g'
+
+# Remove first line from sed:
+sed -e '1d' /path/to/file
+
+# Print text between pattern:
+sed -n '/Feb 28 15:50/,/Feb 28 15:55/p' /path/to/file
+
+# Parse apache error_log:
+sed -e "s/\[.*\]\([^:]*\)\(.*\)/\1/" error_log.txt| sort | uniq -c
+
+# Count unique occurrences of text after pattern in file (example: PHP Notice:):
+sed -n -e 's/^.*\(PHP Notice: \)/\1/p' feb28-1500_to_1530_error_log.txt | sort | uniq -c | wc -l
+
+# Print text before pattern:
+sed -n -e 's/^.*pattern: //p' file

@@ -1,0 +1,27 @@
+PUT _ingest/pipeline/apache_error_log
+{
+    "description": "Pipeline for apache error logs",
+    "processors": [
+      {
+        "grok": {
+          "field": "message",
+          "patterns": [
+	          "\\[%{DAY:DAY} %{MONTH:MONTH} %{MONTHDAY:DAY_NR} %{TIME:TIMESTAMP} %{YEAR:YR}] \\[%{LOGLEVEL:LEVEL}] \\[%{WORD:client} %{IP:IP}] %{GREEDYDATA:message}",
+	          "\\[%{DAY:DAY} %{MONTH:MONTH} %{MONTHDAY:DAY_NR} %{TIME:TIMESTAMP} %{YEAR:YEAR}] \\[%{LOGLEVEL:LEVEL}] %{GREEDYDATA:message}"
+          ],
+          "pattern_definitions": {
+            "TIMESTATMP": "%{DAY} %{MONTH} %{MONTHDAY} %{TIME} %{YEAR}",
+            "GREEDYDATA": ".*"
+          }
+        }
+      }
+    ],
+ "on_failure" : [
+    {
+      "script": {
+        "lang": "painless",
+        "inline": "ctx._index = 'failed-' + ctx._index"
+      }
+    }
+  ]	
+}

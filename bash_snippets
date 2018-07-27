@@ -1,0 +1,36 @@
+# Combine values from multiple arrays into one:
+ACPU=(`printf "processor_count_is_wrong"`)
+ARAM=(`printf "memory_size_is_wrong"`)
+AU=(`printf "u01_has_wrong_size"`)
+AUN=(`printf "u01_partition_does_not_exist"`)
+AAR=(`printf "architecture_is_not_what_we_requested"`)
+AOS=(`printf "operating_system_is_wrong"`)
+
+# create one big array with warnings:
+ALLWARNINGS=( "${ACPU[@]}" "${ARAM[@]}" "${AU[@]}" "${AUN[@]}" "${AAR[@]}" "${AOS[@]}" )
+
+# Add output of a command into array in bash:
+#!/bin/bash
+
+content=(`ls ~/`)
+
+for a in "${content[@]}"
+do
+ echo file/dir is: $a
+done
+ echo Done with listing
+
+
+#  Improve bash history. Add following code to your profile file (.bashrc or other). Following code preserves bash history from multiple terminal windows.
+# NOTE: This might not be good for all, as you may shoot yourself in the foot. USE AT YOUR OWN RISK.
+
+# Avoid duplicates
+export HISTCONTROL=ignoredups:erasedups
+# When the shell exits, append to the history file instead of overwriting it
+shopt -s histappend
+
+# After each command, append to the history file and reread it
+export PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND$'\n'}history -a; history -c; history -r"
+
+# Print longest line from file:
+awk 'length > max_length { max_length = length; longest_line = $0 } END { print longest_line }' <filename>

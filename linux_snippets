@@ -1,0 +1,128 @@
+# Check what's in the memory:
+sudo dd if=/dev/mem | cat | strings >> file.1
+
+# List of cpu, memory usage for all processes, sorted by mem usage::
+ps -A -o pid,%cpu,%mem,command| sort -k3n,3
+
+# Check swap usage of current processes:
+#!/bin/bash
+# Get current swap usage for all running processes
+
+SUM=0
+OVERALL=0
+for DIR in `find /proc/ -maxdepth 1 -type d | egrep "^/proc/[0-9]"` ; do
+PID=`echo $DIR | cut -d / -f 3`
+PROGNAME=`ps -p $PID -o comm --no-headers`
+for SWAP in `grep Swap $DIR/smaps 2>/dev/null| awk '{ print $2 }'`
+do
+let SUM=$SUM+$SWAP
+done
+echo "PID=$PID - Swap used: $SUM - ($PROGNAME )"
+let OVERALL=$OVERALL+$SUM
+SUM=0
+
+done
+echo "Overall swap used: $OVERALL"
+
+#### Redirect stdout and sterr:
+## redirect stdout and sterr to a file
+exec 3>&1 4>&2 >foo 2>&1
+# - usefull for cronjobs
+
+## restore stdout and stderr to the screen
+exec 1>&3 2>&4
+
+# Add scheduled job in bash:
+crontab -l | { cat; echo "*/5 * * * * /some/command --option1 --option2 ";  } | crontab -
+
+# List ip addresses on eth0 using 'ip addr' command:
+ip addr show dev eth0 | awk -F"net " '{print $2}' | awk -F"/24" '{print $1}' | grep "\."
+
+# Rebuild yum cache:
+yum clean all && yum clean metadata && yum clean dbcache && yum makecache
+
+# exclude files in find command. Example, listing all files but .conf:
+find /path/to/dir -type f \( ! -iname "*.conf" \)
+
+# find files with multiple extensions:
+find . -type f \( -iname "*.dhtml" -o -iname "*.php" \)  |wc -l
+locate -r "/u01/www/htdocs" | grep "*.dhtml\|.txt" |wc -l
+
+# Get public ip address from command line:
+$ dig +short myip.opendns.com @resolver1.opendns.com
+$ wget -qO- http://ipecho.net/plain
+$ curl -s http://checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//'  
+$ wget http://ipinfo.io/ip -qO -
+
+# Format partition:
+createPartitions() {
+    sfdisk /dev/sdb -uM << EOF
+,2048,L
+,2048,L
+,2048,L
+,,E
+,1024,L
+,4096,L
+,4096,S
+EOF
+
+    partprobe
+    sleep 5
+
+    for i in 1 2 3 5 6 7 ; do mkfs.ext4 /dev/sdb$i ; done
+
+    echo '/dev/sdb1    /tmp            ext4    defaults,noatime,nodev,nosuid,noexec 1 2' >> /etc/fstab
+    mv /tmp /tmp.old
+    mkdir /tmp
+    mount -a && cp -ax /tmp.old/* /tmp
+
+    echo '/dev/sdb2    /var            ext4    defaults,noatime 1 2' >> /etc/fstab
+    mv /var /var.old
+    mkdir /var
+    mount -a && cp -ax /var.old/* /var
+
+    echo '/dev/sdb3    /var/log        ext4    defaults,noatime 1 2' >> /etc/fstab
+    mv /var/log /var/log.old
+    mkdir /var/log
+    mount -a && cp -ax /var/log.old/* /var/log
+
+    echo '/dev/sdb5    /var/log/audit  ext4    defaults,noatime 1 2' >> /etc/fstab
+    mv /var/log/audit /var/log/audit.old
+    mkdir /var/log/audit
+    mount -a && cp -ax /var/log/audit.old/* /var/log/audit
+
+    echo '/dev/sdb6    /home           ext4    defaults,noatime,nodev 1 2' >> /etc/fstab
+    mv /home /home.old
+    mkdir /home
+    mount -a && cp -ax /home.old/* /home
+
+    #echo '/dev/sdb7    /swap           ext4    defaults,noatime 0 0' >> /etc/fstab
+    sleep 5
+    
+    rm -rf /var.old /var/log.old/ /var/log/audit.old/ /tmp.old /home.old /var.old
+}
+
+# Create 50MB file with dd:
+dd if=/dev/urandom of=/path/to/testfile3 count=50 bs=1024k
+
+# Convert putty public key to ssh key
+ssh-keygen -i -f puttygen_key > openssh_key
+
+# mount root partition in single user mode:
+mount -o rw,remount /
+
+# quick curl loop using seq:
+for i in `seq 1 6` ; do curl localhost/notfound-$i ; sleep 0.2 ; done
+
+# add user manually (one time):
+sudo useradd -m -d /home/<user> -u 12000 <user> -s /bin/bash -c "Comment"
+passwd user
+chage -d 0 user
+
+# Quick way to make a copy of selected file (create backup of a file with less typing):
+cp <filename>.{yaml,yaml.bkp}
+
+# quick way to rename file with short command:
+touch file.tf.disabled
+mv file.tf{.disabled,} # this removes '.disabled'
+

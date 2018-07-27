@@ -1,0 +1,26 @@
+PUT _ingest/pipeline/varnish_log
+{
+    "description": "Pipeline for varnish logs",
+    "processors": [
+      {
+        "grok": {
+          "field": "message",
+          "patterns": [
+            "%{IP:clientip} %{IP:virtualhost} %{NOTSPACE:authuser} %{NOTSPACE:undef} \\[%{HTTPDATE:timestamp}\\] \\\"%{NOTSPACE:method} %{NOTSPACE:url} %{NOTSPACE:version}\\\" %{NOTSPACE:status} %{NUMBER:bytes} %{QS:referer} %{QS:useragent} %{NOTSPACE:cachestatus}"
+          ],
+          "pattern_definitions": {
+            "TIMESTATMP": "%{DAY} %{MONTH} %{MONTHDAY} %{TIME} %{YEAR}",
+            "GREEDYDATA": ".*"
+          }
+        }
+      }
+    ],
+ "on_failure" : [
+    {
+      "script": {
+        "lang": "painless",
+        "inline": "ctx._index = 'failed-' + ctx._index"
+      }
+    }
+  ]	
+}

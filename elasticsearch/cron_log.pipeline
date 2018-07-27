@@ -1,0 +1,26 @@
+PUT _ingest/pipeline/cronlog
+{
+    "description": "Pipeline for cron logs",
+    "processors": [
+      {
+        "grok": {
+          "field": "message",
+          "patterns": [
+            "%{CRONLOG}"
+          ],
+          "pattern_definitions": {
+            "TIMESTATMP": "%{MONTH} %{MONTHDAY} %{TIME}",
+            "GREEDYDATA": ".*"
+          }
+        }
+      }
+    ],
+ "on_failure" : [
+    {
+      "script": {
+        "lang": "painless",
+        "inline": "ctx._index = 'failed-' + ctx._index"
+      }
+    }
+  ]	
+}

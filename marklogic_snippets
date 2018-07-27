@@ -1,0 +1,2 @@
+# Check version from command line:
+curl -s -X GET --anyauth -u <user-name>:<password> http://<host-ip>:8002/manage/v2 | grep version

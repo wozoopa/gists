@@ -1,0 +1,36 @@
+# Script for exporting screen & time boards
+#
+
+
+#!/bin/sh
+# Make sure you replace the API and/or APP key below
+# with the ones for your account
+
+DATE=$(date +%Y-%m-%d-%H_%M)
+
+api_key=
+app_key=
+
+mkdir -p $DATE
+
+echo -e "Getting screenboards.\n"
+curl -s -X GET "https://app.datadoghq.com/api/v1/screen?api_key=${api_key}&application_key=${app_key}" | jq '.' >>$DATE/screenboards-$DATE.json
+echo -e "\n\n"
+echo -e "Getting timeboards.\n"
+curl -s -X GET "https://app.datadoghq.com/api/v1/dash?api_key=${api_key}&application_key=${app_key}" | jq '.' >>$DATE/timeboards-$DATE.json
+echo -e "\n\n"
+echo -e "Get list of metrics.\n"
+#from_time=$(date -v -1d +%s)
+from_time=$(date +%s --date="yesterday")
+curl -s -G "https://app.datadoghq.com/api/v1/metrics" -d "api_key=${api_key}" -d "application_key=${app_key}" -d "from=${from_time}" | jq '.' >>$DATE/metrics-$DATE.json
+echo -e "\n\n"
+echo -e "Get monitors with details."
+curl -s -G "https://app.datadoghq.com/api/v1/monitor" \
+     -d "api_key=${api_key}" \
+     -d "application_key=${app_key}" | jq '.' >>$DATE/monitors-$DATE.json
+echo -e "\n\n"
+echo -e "Get all tags.\n"
+curl -s "https://app.datadoghq.com/api/v1/tags/hosts?api_key=${api_key}&application_key=${app_key}" | jq '.' >>$DATE/hosts-$DATE.json
+echo -e "\n\n"
+echo -e "Users\n"
+curl -s -X GET "https://app.datadoghq.com/api/v1/user?api_key=${api_key}&application_key=${app_key}" | jq '.' >>$DATE/users-$DATE.json

@@ -1,0 +1,175 @@
+#
+# As of August 11 2015 there's no feature to auto assign ENI within Autoscaling group to new ec2 instance with same primary/secondary ip address. Here's a solution.
+# Prerequisite: puppet & facter must be installed.
+# #
+
+# Find out available Start ID number and Kill ID number, for example:
+# [ec2-user@ip-10-15-0-68 ~]$ sudo ls -ltrh /etc/rc3.d/[SK][12]* | awk -F" " '{print $9}' | sort -n
+# /etc/rc3.d/K10psacct
+# /etc/rc3.d/K10saslauthd
+# /etc/rc3.d/S10network
+# /etc/rc3.d/S11auditd
+# /etc/rc3.d/S12rsyslog
+# /etc/rc3.d/S13irqbalance
+# /etc/rc3.d/S13rngd
+# /etc/rc3.d/S13rpcbind
+# /etc/rc3.d/S14nfslock
+# /etc/rc3.d/S15mdmonitor
+# /etc/rc3.d/S19rpcgssd
+# /etc/rc3.d/S22messagebus
+# /etc/rc3.d/S25blk-availability
+# /etc/rc3.d/S25netfs
+# /etc/rc3.d/S26acpid
+# /etc/rc3.d/S26udev-post
+# 
+# We need to start it after network service starts and we can see that S16 and K16 is available.
+# 
+# Modify TARGET_IP, chkconfig line and add this script to selected runlevels as a service, example:
+# 
+# $ sudo vim /etc/init.d/updatePrivateIP; sudo chmod +x /etc/init.d/updatePrivateIP
+# $ sudo chkconfig --add updatePrivateIP
+# $ sudo chkconfig --level 2345 updatePrivateIP on
+#
+
+
+
+
+
+#! /bin/bash
+#
+# updatePrivateIP       Updates secondary private ip address on ec2 instance
+#
+# chkconfig: 2345 10 90
+# description: Updates secondary private ip address\
+#              with desired static one.
+#
+### BEGIN INIT INFO
+# Provides: $updatePrivateIP
+# Should-Start: updatePrivateIP
+# Short-Description: Updates secondary private ip address
+# Description: Updates secondary ip address
+### END INIT INFO
+
+
+AWSCMD="/usr/bin/aws"
+CURL="/usr/bin/curl"
+MACLINK="http://169.254.169.254/latest/meta-data/network/interfaces/macs"
+TARGET_IP="<TARGET-IP-ADDRESS>"
+REGION="us-east-1"
+MACID=$(${CURL} --silent "${MACLINK}/")
+ENI_ID=$(${CURL} --silent "${MACLINK}"/"${MACID}"interface-id)
+
+UpdateIP() {
+   ${AWSCMD} ec2 assign-private-ip-addresses --network-interface-id "${ENI_ID}" --private-ip-addresses "${TARGET_IP}" --allow-reassignment --region "${REGION}"
+}
+
+# See how we were called.
+case "$1" in
+  start)
+        [ "$EUID" != "0" ] && exit 4
+        UpdateIP
+      /sbin/service network restart
+        ;;
+  stop)
+        [ "$EUID" != "0" ] && exit 4
+        echo "nothing to do here" >>/dev/null
+
+        ;;
+  status)
+
+        ${CURL} --silent ${MACLINK}/$(${CURL} --silent ${MACLINK}/)/local-ipv4s -w "\n"
+        ;;
+  restart|reload|force-reload)
+        echo "no action here" >>/dev/null
+        ;;
+  *)
+        echo $"Usage: $0 {start|stop|status|restart|reload|force-reload}"
+        exit 2
+esac
+
+exit
+
+#
+# End of updatePrivateIP script
+#
+
+
+
+
+
+# 
+# setupHostname.sh script
+#
+
+#!/bin/bash
+
+# /usr/local/bin/setupHostname.sh
+# this script is called from /etc/rc.local
+# Setup hostname based on facter data & secondary ip address
+# Prerequisite: Secondary IP address must be configured
+#
+
+DEBUG="false"
+LOG="/var/log/messages"
+SCRIPT_NAME=$(/bin/basename $0)
+#HOSTNAME=$(facter ec2_hostname| awk -F"." '{print $1}')
+HOSTNAME="<hostname>"
+#DOMAIN=$(facter domain)
+DOMAIN="<domain-name>"
+LOCKFILE="/var/lock/${SCRIPT_NAME}.lck"
+OPTION="$1"
+SECONDARY_IP_CHECK=$(ip addr show dev eth0 | grep "secondary" | awk -F"/24" '{print $1}' | awk -F" " '{print $2}' | wc -l)
+
+HOSTS_FILE="/etc/hosts"
+NETWORK_CONFIG_FILE="/etc/sysconfig/network"
+
+
+if [[ $EUID -ne 0 ]]; then
+   echo "Please run this script as root or using sudo"
+   exit 2
+fi
+
+Warning() {
+   logger -t "${SCRIPT_NAME}"  "Warning: $1 Process aborted"
+   exit 1
+}
+
+UpdateHostname() {
+   NEWHOSTNAME="${HOSTNAME}.${DOMAIN}"
+   CHECK_FQDN=$(hostname -f 2>&1 | awk -F": " '{print $NF}')
+   touch ${LOCKFILE}
+   SUBNET=$(facter ipaddress | cut -d"." -f -3)
+   IP_ADDRESS=$(ip addr show dev eth0 | grep "secondary" | awk -F"/24" '{print $1}' | awk -F" " '{print $2}')
+   cp ${HOSTS_FILE} ${HOSTS_FILE}.bkp
+   FIRSTLINE="127.0.0.1   localhost localhost.localdomain"
+   echo -e "${FIRSTLINE} \n${IP_ADDRESS} \t ${NEWHOSTNAME}" >${HOSTS_FILE}
+   cp ${NETWORK_CONFIG_FILE} ${NETWORK_CONFIG_FILE}.bkp
+   sed -i -e "s/HOSTNAME=*.*/HOSTNAME=${NEWHOSTNAME}/g" ${NETWORK_CONFIG_FILE}
+   hostname ${NEWHOSTNAME}
+   service network restart
+   rm -rf ${LOCKFILE}
+}
+
+Process() {
+   if [[ "$CHECK_FQDN" == "Unknown host" ]]; then
+      UpdateHostname
+   elif [[ "${OPTION}" == "force" ]]; then
+      UpdateHostname
+   else
+      echo "FQDN is already configured."
+   fi
+}
+
+if [ -e "${LOCKFILE}" ]; then
+   Warning "lock file exists"
+elif [[ "${SECONDARY_IP_CHECK}" -eq "0" ]]; then
+   sleep 30
+   if [[ "${SECONDARY_IP_CHECK}" -eq "0" ]]; then
+      Warning "Secondary IP address not set"
+   else
+      Process
+   fi
+else
+   Process
+fi
+

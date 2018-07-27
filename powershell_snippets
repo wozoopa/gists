@@ -1,0 +1,3 @@
+# Check if port is up with powershell
+New-Object System.Net.Sockets.TcpClient("www.host-example.com", 443)
+

@@ -1,0 +1,9 @@
+# Perl documentations, search tips.
+
+man perl
+perldoc -t <topic>    # example:
+perldoc -t perlcheat
+perldoc -t perlfaq4
+perldoc -t perlintro
+perldoc -t perltoc
+perldoc -q "How can I compare two dates and find the difference?"

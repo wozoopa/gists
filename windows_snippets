@@ -1,0 +1,3 @@
+# Test port connection in powershell ( windows 7) - alternative to telnet
+New-Object System.Net.Sockets.TcpClient("192.168.0.2", 80)
+

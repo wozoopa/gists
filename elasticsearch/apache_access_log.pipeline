@@ -1,0 +1,30 @@
+PUT _ingest/pipeline/apache_access_log
+{
+    "description": "Pipeline to parse Apache Access logs",
+    "processors": [
+      {
+        "grok": {
+          "field": "message",
+          "patterns": [
+            "%{COMBINEDAPACHELOG}+%{GREEDYDATA:extra_fields}"
+          ],
+          "pattern_definitions": {
+            "GREEDYDATA": ".*"
+          }
+        }
+      },
+      {
+        "date": {
+          "field": "timestamp",
+          "formats": [
+            "dd/MMM/YYYY:HH:mm:ss Z"
+          ]
+        }
+      },
+      {
+        "user_agent": {
+          "field": "agent"
+        }
+      }
+    ]
+}
