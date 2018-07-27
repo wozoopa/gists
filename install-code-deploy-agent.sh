@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # -------------------------------------- #
-# Install code-deployment agent
+# Install code-deploy agent
 # -------------------------------------- #
 
 REGION=$(ec2-metadata -z | awk -F": " '{print $2}' | sed -e 's/.$//g')
