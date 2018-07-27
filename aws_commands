@@ -1,2 +1,11 @@
 # Get region using ec2-metadata:
 $ ec2-metadata -z | awk -F": " '{print $2}' | sed -e 's/.$//g'
+
+
+# -------------------------------------- #
+# Create lambda function
+# -------------------------------------- #
+# update variables: function_name account-id role-for-function target-region
+# example assumes python2.7 and lambda_handler is used
+
+aws lambda create-function --function-name <function_name> --role  arn:aws:iam::<account-id>:role/<role-for-function> --runtime python2.7 --handler <function-name>.lambda_handler --zip-file fileb://<function-name>.zip --region <target-region> --timeout <seconds>
