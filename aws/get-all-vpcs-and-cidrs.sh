@@ -16,5 +16,5 @@ echo "Listing default VPCS:"
 for region in $REGIONS
    do
       echo "Getting Custom VPC list in $region region:"
-      aws ec2 describe-vpcs --filters Name=isDefault,Values=false --query "Vpcs[].{id:VpcId,cidr:CidrBlock}" --region=${region} --output table
+      aws ec2 describe-vpcs --filters Name=isDefault,Values=true --query "Vpcs[].{id:VpcId,cidr:CidrBlock}" --region=${region} --output table
    done
