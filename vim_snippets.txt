@@ -20,3 +20,23 @@
 "# Modify status bar:
 "# set statusline=%<%F%h%m%r\ [%{&ff}]\ (%{strftime(\"%H:%M\ %d/%m/%Y\",getftime(expand(\"%:p\")))})%=%l,%c%V\ %P
 
+
+
+------------------------------------------------------------------------------------- 
+ Masking in vim, create classified like documents:
+-------------------------------------------------------------------------------------
+# Add these to ...syntax/passwd.vim file, in .vim files " is a comment.
+
+"Match 1st column with :x as delimiter, all home directories
+highlight Search ctermfg=grey ctermbg=grey
+match Search /^.*:x\|root\|\/home\|:\/.*:/
+
+
+------------------------------------------------------------------------------------- 
+Masking AWS_Credentials in vim
+-------------------------------------------------------------------------------------
+" Add below code to ~/.vimrc or to /etc/vim/vimrc
+
+"
+"set conceallevel=3
+"autocmd BufEnter * syn match Concealed '_ID="*.*"\|_KEY="*.*"\|*.*ID="*.*"\|^# *.*AWS_ACCESS_KEY_ID="*.*"\|^# *.*_KEY="*.*"' conceal
