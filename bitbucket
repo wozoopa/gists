@@ -1,0 +1,5 @@
+# list projects:
+curl -s -u user:pass http://<hostname>/rest/api/1.0/projects | jq . | grep "href
+
+# list repositories for given project:
+curl -s -u user:pass http://<hostname>/rest/api/1.0/projects/<project-name>/repos | jq . | tr -s [:blank:] | grep -e '^ \"href\": \"http.*\.git\",$'
