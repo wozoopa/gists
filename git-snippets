@@ -25,3 +25,15 @@ alias gitshowfiles='git diff-tree --no-commit-id --name-only -r'
 # fix git clone issue:
 git config --global url."https://".insteadOf git://
 
+
+
+# revert last commit in git:
+git revert HEAD --no-edit
+
+
+# remove file from staged area (after git add was issued)
+git reset HEAD <filename>
+
+
+# hide commits up to selected tag:
+git reset --hard v1
