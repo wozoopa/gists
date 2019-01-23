@@ -126,3 +126,8 @@ cp <filename>.{yaml,yaml.bkp}
 touch file.tf.disabled
 mv file.tf{.disabled,} # this removes '.disabled'
 
+# check hp system:
+
+hpacucli "ctrl slot=0 pd all show"
+hpacucli "ctrl all show config detail"
+hpacucli "ctrl slot=0 pd 1I:1:2 modify led=on"
