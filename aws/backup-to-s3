@@ -1,0 +1,128 @@
+#!/bin/bash
+
+SCRIPT_NAME=$(/bin/basename $0)
+TIME=$(date +%Y-%m-%d-%H_%M)
+TODAY=$(date +%F)
+DATA_SOURCE="</path/to/application-data>"
+FROM="<someone@domain.com>"
+RECIPIENT="<admin@domain.com>"
+MYSQL_BKP_DIR="/u02/backups/${TODAY}"
+LOCAL_BACKUP_DIR="/u02/backups/${TODAY}"
+RDS="<rds-host....>"
+USER="<database-user>"
+PASSWORD="<db-password>"
+ME=`/bin/hostname -s`
+DB="<database-name>"
+MOUNT_POINT="/u01"
+S3BUCKET="<s3-bucket-name>"
+S3PATH="s3://${S3BUCKET}/jira/${TODAY}"
+BACKUP_LOG="/u02/backups/logs/jira-backups-${TIME}.log"
+BACKUP_DATA_FILE="${LOCAL_BACKUP_DIR}/<app>-application-data-${TIME}.tar.bz2"
+BACKUP_DATA_DESTINATION="${S3PATH}/data"
+BACKUP_DB_FILE="${MYSQL_BKP_DIR}/${ME}.${DB}.sql"
+BACKUP_DB_DESTINATION="${S3PATH}/mysql"
+
+
+Error() {
+ logger -t "${SCRIPT_NAME}"  "ERROR: $1 Process aborted"
+ exit 1
+}
+
+Message() {
+ logger -t "${SCRIPT_NAME}"  "NOTICE: $1 "
+ exit 1
+}
+
+Timer() {
+# Requires to have variable BEGIN_TIME set to = BEGIN_TIME=$(Timer)
+# Usage: Timer "{BEGIN_TIME}"
+
+    if [[ $# -eq 0 ]]; then
+        echo $(date '+%s')
+    else
+        local  stime=$1
+        etime=$(date '+%s')
+
+        if [[ -z "$stime" ]]; then stime=$etime; fi
+
+        dt=$((etime - stime))
+        ds=$((dt % 60))
+        dm=$(((dt / 60) % 60))
+        dh=$((dt / 3600))
+        printf '%d:%02d:%02d' $dh $dm $ds
+    fi
+}
+
+BEGIN_TIME=$(Timer)
+
+
+Message() {
+    # Usage: Message "<email body>" "<part nam of backup process>" "FAILED/SUCCESS/ABORTED" "$ELAPSED" "$BACKUP_FILE_SIZE"
+    # $1 - notes
+    # $2 - type of backup (stash-backup-client or s3 upload)
+    # $3 - status: PARTIALLY FAILED, FAILED or SUCCESS
+    # $4 - $ELAPSED
+    # $5 - $BACKUP_SIZE
+    # example: echo "$1" | /bin/mail -s "SomeApplication Backup Report for $TODAY - $3" -r ${FROM} ${RECIPIENT}
+
+    echo -e "Backup Host:  $HOSTNAME
+Elapsed Time:  $4
+Status:  $2
+Data Backup size:  $5
+DB Backup size: $6
+LogFile:  $BACKUP_LOG
+Notes:  $1" | /bin/mail -s "<App-name> Backup Report for $TODAY - $3" -r ${FROM} ${RECIPIENT}
+}
+
+BackupJob() {
+   echo "BEGIN Backup Process: `date`" >>$BACKUP_LOG
+   mkdir -p ${LOCAL_BACKUP_DIR}
+   fsfreeze -f ${MOUNT_POINT}
+   tar -cjSf ${BACKUP_DATA_FILE} ${DATA_SOURCE} >>${BACKUP_LOG} 2>&1
+   /usr/bin/mysqldump -h"${RDS}" -u"$USER" -p"$PASSWORD" "$DB" --routines --add-drop-table --add-locks --extended-insert --single-transaction --quick > "${BACKUP_DB_FILE}"
+   bzip2 ${BACKUP_DB_FILE}
+   fsfreeze -u ${MOUNT_POINT}
+   aws s3api put-object --bucket ${S3BUCKET} --key jira/${TODAY} >>${BACKUP_LOG} 2>&1
+   aws s3 cp --recursive ${LOCAL_BACKUP_DIR} ${S3PATH}/ >>${BACKUP_LOG} 2>&1
+   BACKUP_DATA_FILE_SIZE=$( if [ -e "${BACKUP_DATA_FILE}" ]; then /usr/bin/stat -c %s ${BACKUP_DATA_FILE} | awk '{ sum=$1 ; hum[1024**3]="Gb";hum[1024**2]="Mb";hum[1024]="Kb"; for (x=1024**3; x>=1024; x/=1024){ if (sum>=x) { printf "%.2f %s\n",sum/x,hum[x];break } }} '; fi)
+   BACKUP_DB_FILE_SIZE=$( if [ -e "${BACKUP_DB_FILE}.bz2" ]; then /usr/bin/stat -c %s ${BACKUP_DB_FILE}.bz2 | awk '{ sum=$1 ; hum[1024**3]="Gb";hum[1024**2]="Mb";hum[1024]="Kb"; for (x=1024**3; x>=1024; x/=1024){ if (sum>=x) { printf "%.2f %s\n",sum/x,hum[x];break } }} '; fi)
+   echo "COMPLETED Backup Process: `date`" >>${BACKUP_LOG} 2>&1
+}
+
+
+Process() {
+   RETVAL=$?
+   START=$(Timer)
+   BackupJob
+
+   if [ "${RETVAL}" -ne "0" ]; then
+      ELAPSED=$(Timer $START)
+      Message "Completed successfuly - files: \n ${BACKUP_DATA_FILE} \n ${BACKUP_DB_FILE}.bz2 \n uploaded to s3." "OK" "SUCCESS" "$ELAPSED" "$BACKUP_DATA_FILE_SIZE" "$BACKUP_DB_FILE_SIZE"
+   else
+      ELAPSED=$(Timer $START)
+      Message "Backup failed, refer to $BACKUP_LOG for more information." "FAILED" "FAILURE" "$ELAPSED" "$BACKUP_DATA_FILE_SIZE" "$BACKUP_DB_FILE_SIZE"
+   fi
+}
+
+CheckMountPoints() {
+   find /u02/backups/ -type f -mtime +7 -exec rm -rf {} \;
+   BACKUP_MOUNT_POINT="/u02"
+   CHECK_MOUNT=$(mount | grep "/u02" | wc -l)
+   if [[ "${CHECK_MOUNT}" -eq 0 ]]; then
+      echo "ERROR: ${BACKUP_MOUNT_POINT} NOT MOUNTED!"
+      echo "Backup process terminated."
+      exit 2
+   else
+      Process
+   fi
+}
+
+
+
+if [[ $EUID -ne "0" ]]; then
+   echo "ERROR: must be root"
+   exit 2
+else
+   CheckMountPoints
+fi
+
