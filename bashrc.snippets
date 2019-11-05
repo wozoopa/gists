@@ -103,3 +103,21 @@ else
    Usage
 fi
 }
+
+editfiles() {
+  Usage () {
+    echo "editfiles <path>"
+  }
+
+  if [ $# -gt "0" ]; then
+    dir=$1
+    find $dir -type f | xargs bash -c '</dev/tty /usr/bin/vim "$@"' ignoreme
+  else
+    Usage
+  fi
+}
+
+argvim() {
+   xargs bash -c '</dev/tty /usr/bin/vim "$@"' ignoreme
+}
+
