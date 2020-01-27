@@ -54,3 +54,12 @@ aws ec2 describe-instances --instance-ids "<instance-id>" --region us-east-1 --o
 
 # get credentials from ec2 (requires jq to be installed):
 curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/) | jq '. | {aws_access_key_id: .AccessKeyId, aws_secret_access_key: .SecretAccessKey, aws_session_token: .Token, expiration: .Expiration}' | tr ":" "=" | sed -e 's/\"//g' | sed 's/^  //' | sed 's/,//'
+
+# List rds instances and their status with aws cli and query:
+aws rds describe-db-instances --profile <profile> --region <region> --output=table --query 'DBInstances[*].{ID:DBInstanceIdentifier,STATUS:DBInstanceStatus,Endpoint:Endpoint.Address}'
+
+# List ec2 instances and their status with aws cli and query:
+aws ec2 describe-instances --profile <profile> --region <region> --output=table --query 'Reservations[*].Instances[*].{NAME:Tags[?Key==`Name`] | [0].Value, State:State.Name,PublicDNS:PublicDnsName,PrivIP:PrivateIpAddress}'
+aws ec2 describe-instances --profile <profile> --region <region> --output=table --query 'Reservations[*].Instances[*].{NAME:Tags[?Key==`Name`] | [0].Value, State:State.Name,PublicDNS:PublicDnsName,PrivIP:PrivateIpAddress,InternalDNS:PrivateDnsName,InstaceID:InstanceId,Size:InstanceType}'
+
+for region in us-east-1 us-west-1 us-west-2; do echo -e "\n Status for ${region} region:"; aws ec2 describe-instances --profile <profile> --region ${region} --output=table --query 'Reservations[*].Instances[*].{NAME:Tags[?Key==`Name`] | [0].Value, State:State.Name,PublicDNS:PublicDnsName,PrivIP:PrivateIpAddress,InternalDNS:PrivateDnsName,InstaceID:InstanceId,Size:InstanceType}'; done
