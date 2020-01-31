@@ -10,3 +10,6 @@
 # sudo vgchange -ay
 # sudo lvscan # should list logical volume as active
 # sudo mount /pat/to/volume /path/to/dir
+#
+# If mounting on xfs then use:
+# mount -o nouuid ...
