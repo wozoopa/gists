@@ -1,0 +1,7 @@
+# Dropping traffic with pattern keyword
+-A FORWARD -p tcp -m state --state ESTABLISHED -m string --hex-string "pattern" --algo bm -m string --hex-string "pattern" --algo bm -j LOG --log-prefix "Dropping forward pattern traffic"
+-A FORWARD -p tcp -m state --state ESTABLISHED -m string --hex-string "pattern" --algo bm -m string --hex-string "pattern" --algo bm -j DROP
+-A INPUT -p tcp -m state --state ESTABLISHED -m string --hex-string "pattern" --algo bm -m string --hex-string "pattern" --algo bm -j LOG --log-prefix "Dropping incoming pattern traffic"
+-A INPUT -p tcp -m state --state ESTABLISHED -m string --hex-string "pattern" --algo bm -m string --hex-string "pattern" --algo bm -j DROP
+-A OUTPUT -p tcp -m state --state ESTABLISHED -m string --hex-string "pattern" --algo bm -m string --hex-string "pattern" --algo bm -j LOG --log-prefix "Dropping out pattern traffic"
+-A OUTPUT -p tcp -m state --state ESTABLISHED -m string --hex-string "pattern" --algo bm -m string --hex-string "pattern" --algo bm -j DROP
